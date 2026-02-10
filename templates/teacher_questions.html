@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Soal Ujian: {{ exam.title }}</h2>
+<div class="row g-4">
+  <div class="col-md-5">
+    <div class="card"><div class="card-body">
+      <h5>Tambah Soal</h5>
+      <form method="post">
+        <textarea class="form-control mb-2" name="question_text" placeholder="Pertanyaan" required></textarea>
+        <input class="form-control mb-2" name="option_a" placeholder="Pilihan A" required>
+        <input class="form-control mb-2" name="option_b" placeholder="Pilihan B" required>
+        <input class="form-control mb-2" name="option_c" placeholder="Pilihan C" required>
+        <input class="form-control mb-2" name="option_d" placeholder="Pilihan D" required>
+        <select class="form-select mb-2" name="correct_option">
+          <option>A</option><option>B</option><option>C</option><option>D</option>
+        </select>
+        <button class="btn btn-primary w-100">Tambah</button>
+      </form>
+    </div></div>
+  </div>
+  <div class="col-md-7">
+    <div class="card"><div class="card-body">
+      <h5>Daftar Soal</h5>
+      <ol>
+        {% for q in questions %}
+        <li class="mb-2">{{ q.question_text }} <span class="badge text-bg-success">Jawaban: {{ q.correct_option }}</span></li>
+        {% else %}<li>Belum ada soal.</li>{% endfor %}
+      </ol>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

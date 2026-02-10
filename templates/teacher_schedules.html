@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Penjadwalan Ujian</h2>
+<div class="row g-4">
+  <div class="col-md-4">
+    <div class="card"><div class="card-body">
+      <h5>Buat Jadwal</h5>
+      <form method="post">
+        <select class="form-select mb-2" name="exam_id" required>
+          {% for exam in exams %}<option value="{{ exam.id }}">{{ exam.title }}</option>{% endfor %}
+        </select>
+        <input class="form-control mb-2" name="target_class" placeholder="Target kelas (mis. XII-A)" required>
+        <label class="form-label">Mulai</label>
+        <input class="form-control mb-2" type="datetime-local" name="start_time" required>
+        <label class="form-label">Selesai</label>
+        <input class="form-control mb-2" type="datetime-local" name="end_time" required>
+        <button class="btn btn-primary w-100">Simpan Jadwal</button>
+      </form>
+    </div></div>
+  </div>
+  <div class="col-md-8">
+    <div class="card"><div class="card-body table-responsive">
+      <table class="table">
+        <thead><tr><th>Ujian</th><th>Kelas</th><th>Mulai</th><th>Selesai</th></tr></thead>
+        <tbody>{% for s in schedules %}<tr><td>{{ s.title }}</td><td>{{ s.target_class }}</td><td>{{ s.start_time }}</td><td>{{ s.end_time }}</td></tr>{% endfor %}</tbody>
+      </table>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

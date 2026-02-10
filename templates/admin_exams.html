@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Kelola Ujian</h2>
+<div class="row g-4">
+  <div class="col-md-4">
+    <div class="card"><div class="card-body">
+      <h5>Tambah Ujian</h5>
+      <form method="post">
+        <input class="form-control mb-2" name="title" placeholder="Judul ujian" required>
+        <textarea class="form-control mb-2" name="description" placeholder="Deskripsi"></textarea>
+        <input class="form-control mb-2" name="duration_minutes" type="number" min="1" value="60" required>
+        <input class="form-control mb-2" name="token" placeholder="Token (opsional)">
+        <button class="btn btn-success w-100">Buat Ujian</button>
+      </form>
+    </div></div>
+  </div>
+  <div class="col-md-8">
+    <div class="card"><div class="card-body table-responsive">
+      <table class="table">
+        <thead><tr><th>Judul</th><th>Token</th><th>Durasi</th><th>Export Soal</th></tr></thead>
+        <tbody>
+          {% for e in exams %}
+          <tr>
+            <td>{{ e.title }}</td><td><code>{{ e.token }}</code></td><td>{{ e.duration_minutes }} menit</td>
+            <td><a class="btn btn-sm btn-outline-dark" href="{{ url_for('export_questions_csv', exam_id=e.id) }}">CSV</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

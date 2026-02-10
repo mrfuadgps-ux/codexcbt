@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="mb-3">Dashboard Siswa</h2>
+<div class="card mb-4">
+  <div class="card-body">
+    <h5>Mulai Ujian dengan Token</h5>
+    <form class="row g-2" method="post" action="{{ url_for('start_exam') }}">
+      <div class="col-md-6"><input class="form-control" name="token" placeholder="Masukkan token" required></div>
+      <div class="col-md-3"><button class="btn btn-primary w-100">Mulai</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-7">
+    <div class="card"><div class="card-body">
+      <h5>Jadwal Kelas Anda</h5>
+      <ul class="list-group list-group-flush">
+      {% for row in upcoming %}
+        <li class="list-group-item">
+          <strong>{{ row.title }}</strong> ({{ row.duration_minutes }} menit)<br>
+          <small>{{ row.start_time }} s/d {{ row.end_time }} | Token: <code>{{ row.token }}</code></small>
+          {% if now >= row.start_time and now <= row.end_time %}<span class="badge text-bg-success">Sedang Berlangsung</span>{% endif %}
+        </li>
+      {% else %}
+        <li class="list-group-item text-muted">Belum ada jadwal.</li>
+      {% endfor %}
+      </ul>
+    </div></div>
+  </div>
+  <div class="col-md-5">
+    <div class="card"><div class="card-body">
+      <h5>Riwayat Nilai</h5>
+      <ul class="list-group list-group-flush">
+      {% for r in history %}
+        <li class="list-group-item d-flex justify-content-between"><span>{{ r.title }}</span><strong>{{ '%.2f'|format(r.score or 0) }}</strong></li>
+      {% else %}
+        <li class="list-group-item text-muted">Belum ada nilai.</li>
+      {% endfor %}
+      </ul>
+    </div></div>
+  </div>
+</div>
+{% endblock %}
