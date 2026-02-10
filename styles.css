@@ -1,0 +1,31 @@
+body {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%);
+}
+
+.card {
+  border: 0;
+  border-radius: 14px;
+}
+
+.metric {
+  border-radius: 12px;
+  background: #1d4ed8;
+  color: #fff;
+  padding: 14px;
+}
+
+.metric p {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.table td, .table th { vertical-align: middle; }
+
+code {
+  background: #111827;
+  color: #e5e7eb;
+  border-radius: 6px;
+  padding: 2px 6px;
+}

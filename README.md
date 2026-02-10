@@ -1,33 +1,31 @@
-# CBT School App
+# CBT Full Web (Tanpa Python)
 
-Aplikasi CBT lengkap sederhana berbasis Flask dengan fitur:
+Aplikasi CBT versi **full web** (HTML + CSS + JavaScript), tanpa backend Python.
 
-- Login multi-role: **admin**, **guru**, **siswa**.
-- Ujian berbasis **token**.
-- **Penjadwalan ujian** per kelas.
-- Kelola pengguna, ujian, dan soal.
-- Siswa mengerjakan ujian dan mendapatkan nilai otomatis.
-- **Import/Export data** penuh (JSON).
-- Export soal ujian ke CSV.
-- UI modern menggunakan Bootstrap 5.
+## Fitur
+- Login role terpisah: **admin**, **guru**, **siswa**.
+- Ujian dengan **token**.
+- Penjadwalan ujian per kelas.
+- Kelola data user, ujian, soal, dan jadwal.
+- Siswa mengerjakan ujian + nilai otomatis.
+- **Export semua data** ke JSON.
+- **Import data** dari JSON.
+- Export soal per ujian ke CSV.
+- UI modern dengan Bootstrap.
 
-## Menjalankan
+## Cara Menjalankan
+Cukup buka `index.html` di browser, atau jalankan server statis:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python app.py
+python3 -m http.server 8080
 ```
 
-Buka: `http://localhost:5000`
+lalu buka `http://localhost:8080`.
 
-## Akun default
-
+## Akun Default
 - Admin: `admin / admin123`
 - Guru: `guru / guru123`
 - Siswa: `siswa / siswa123`
 
 ## Catatan
-
-Database SQLite (`cbt.db`) dibuat otomatis saat aplikasi dijalankan.
+Semua data disimpan di **localStorage browser** (`cbt_web_data_v1`).
