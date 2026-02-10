@@ -11,6 +11,8 @@ Aplikasi CBT versi **full web** (HTML + CSS + JavaScript), tanpa backend Python.
 - **Export semua data** ke JSON.
 - **Import data** dari JSON.
 - Export soal per ujian ke CSV.
+- **Upload/import soal CSV** per ujian (admin & guru).
+- Panel **guru dibuat clean**: fokus upload/download soal, generate token, dan persiapan jadwal ujian.
 - UI modern dengan Bootstrap.
 
 ## Cara Menjalankan
@@ -26,6 +28,19 @@ lalu buka `http://localhost:8080`.
 - Admin: `admin / admin123`
 - Guru: `guru / guru123`
 - Siswa: `siswa / siswa123`
+
+## Format CSV Soal
+Header wajib:
+
+```csv
+question,option_a,option_b,option_c,option_d,correct
+```
+
+Contoh:
+
+```csv
+"2+2=?","1","2","3","4","D"
+```
 
 ## Catatan
 Semua data disimpan di **localStorage browser** (`cbt_web_data_v1`).

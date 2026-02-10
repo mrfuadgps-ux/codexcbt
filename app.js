@@ -34,7 +34,9 @@ function uid(arr) {
 
 function flash(message, type = "success") {
   document.getElementById("alertContainer").innerHTML = `<div class="alert alert-${type}">${message}</div>`;
-  setTimeout(() => (document.getElementById("alertContainer").innerHTML = ""), 2500);
+  setTimeout(() => {
+    document.getElementById("alertContainer").innerHTML = "";
+  }, 2500);
 }
 
 function fmt(dt) {
@@ -43,6 +45,12 @@ function fmt(dt) {
 
 function randomToken() {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
+}
+
+function roleLabel(role) {
+  if (role === "admin") return "Admin";
+  if (role === "teacher") return "Guru";
+  return "Siswa";
 }
 
 function render() {
@@ -60,8 +68,8 @@ function render() {
   loginView.classList.add("d-none");
   appView.classList.remove("d-none");
   navUser.classList.remove("d-none");
-  navUser.textContent = `${currentUser.fullName} (${currentUser.role})`;
-  document.getElementById("roleTitle").textContent = `Dashboard ${currentUser.role.toUpperCase()}`;
+  navUser.textContent = `${currentUser.fullName} (${roleLabel(currentUser.role)})`;
+  document.getElementById("roleTitle").textContent = `Panel ${roleLabel(currentUser.role)}`;
 
   ["adminView", "teacherView", "studentView"].forEach((id) => document.getElementById(id).classList.add("d-none"));
 
@@ -76,9 +84,9 @@ function renderAdmin() {
 
   el.innerHTML = `
     <div class="row g-3 mb-3">
-      <div class="col-md-4"><div class="metric"><small>User</small><p>${state.users.length}</p></div></div>
-      <div class="col-md-4"><div class="metric"><small>Ujian</small><p>${state.exams.length}</p></div></div>
-      <div class="col-md-4"><div class="metric"><small>Jadwal</small><p>${state.schedules.length}</p></div></div>
+      <div class="col-md-4"><div class="metric"><small>Total User</small><p>${state.users.length}</p></div></div>
+      <div class="col-md-4"><div class="metric"><small>Total Ujian</small><p>${state.exams.length}</p></div></div>
+      <div class="col-md-4"><div class="metric"><small>Total Jadwal</small><p>${state.schedules.length}</p></div></div>
     </div>
 
     <div class="row g-3">
@@ -94,8 +102,8 @@ function renderAdmin() {
               <option value="teacher">Guru</option>
               <option value="admin">Admin</option>
             </select>
-            <input class="form-control" name="className" placeholder="Kelas (untuk siswa)" />
-            <button class="btn btn-primary">Simpan</button>
+            <input class="form-control" name="className" placeholder="Kelas (khusus siswa)" />
+            <button class="btn btn-primary">Simpan User</button>
           </form>
         </div></div>
       </div>
@@ -105,15 +113,15 @@ function renderAdmin() {
           <h6>Buat Ujian</h6>
           <form id="formAddExam" class="row g-2">
             <div class="col-md-6"><input class="form-control" name="title" placeholder="Judul ujian" required /></div>
-            <div class="col-md-3"><input class="form-control" type="number" min="1" name="duration" value="60" required /></div>
-            <div class="col-md-3"><input class="form-control" name="token" placeholder="Token (opsional)" /></div>
+            <div class="col-md-2"><input class="form-control" type="number" min="1" name="duration" value="60" required /></div>
+            <div class="col-md-4"><input class="form-control" name="token" placeholder="Token (opsional)" /></div>
             <div class="col-12"><textarea class="form-control" name="description" placeholder="Deskripsi"></textarea></div>
             <div class="col-12"><button class="btn btn-success">Tambah Ujian</button></div>
           </form>
         </div></div>
 
         <div class="card"><div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
             <h6 class="mb-0">Data Ujian</h6>
             <div class="d-flex gap-2">
               <button class="btn btn-sm btn-warning" id="btnImport">Import JSON</button>
@@ -122,13 +130,26 @@ function renderAdmin() {
           </div>
           <div class="table-responsive">
             <table class="table table-sm">
-              <thead><tr><th>Judul</th><th>Token</th><th>Durasi</th><th>Export Soal</th></tr></thead>
+              <thead><tr><th>Judul</th><th>Token</th><th>Durasi</th><th>Soal</th><th>CSV</th></tr></thead>
               <tbody>
-                ${state.exams.map((e) => `<tr><td>${e.title}</td><td><code>${e.token}</code></td><td>${e.duration} menit</td><td><button class="btn btn-outline-secondary btn-sm" data-expcsv="${e.id}">CSV</button></td></tr>`).join("") || `<tr><td colspan="4" class="text-center">Belum ada ujian</td></tr>`}
+                ${state.exams.map((e) => {
+                  const qCount = state.questions.filter((q) => q.examId === e.id).length;
+                  return `<tr>
+                    <td>${e.title}</td>
+                    <td><code>${e.token}</code></td>
+                    <td>${e.duration} menit</td>
+                    <td>${qCount}</td>
+                    <td class="d-flex gap-1">
+                      <button class="btn btn-outline-secondary btn-sm" data-expcsv="${e.id}">Export</button>
+                      <button class="btn btn-outline-primary btn-sm" data-impcsv="${e.id}">Upload</button>
+                    </td>
+                  </tr>`;
+                }).join("") || `<tr><td colspan="5" class="text-center">Belum ada ujian</td></tr>`}
               </tbody>
             </table>
           </div>
           <input id="importFile" type="file" accept="application/json" class="d-none" />
+          <input id="importQuestionCsv" type="file" accept=".csv,text/csv" class="d-none" />
         </div></div>
       </div>
     </div>
@@ -138,7 +159,7 @@ function renderAdmin() {
       <table class="table table-sm">
         <thead><tr><th>Nama</th><th>Username</th><th>Role</th><th>Kelas</th></tr></thead>
         <tbody>
-          ${state.users.map((u) => `<tr><td>${u.fullName}</td><td>${u.username}</td><td>${u.role}</td><td>${u.className || "-"}</td></tr>`).join("")}
+          ${state.users.map((u) => `<tr><td>${u.fullName}</td><td>${u.username}</td><td>${roleLabel(u.role)}</td><td>${u.className || "-"}</td></tr>`).join("")}
         </tbody>
       </table>
     </div></div>
@@ -147,7 +168,9 @@ function renderAdmin() {
   document.getElementById("formAddUser").onsubmit = (ev) => {
     ev.preventDefault();
     const fd = new FormData(ev.target);
-    if (state.users.find((u) => u.username === fd.get("username"))) return flash("Username sudah dipakai", "danger");
+    if (state.users.find((u) => u.username === fd.get("username"))) {
+      return flash("Username sudah dipakai", "danger");
+    }
     state.users.push({
       id: uid(state.users),
       fullName: fd.get("fullName"),
@@ -157,7 +180,7 @@ function renderAdmin() {
       className: fd.get("className") || ""
     });
     saveState();
-    flash("User ditambahkan");
+    flash("User berhasil ditambahkan");
     render();
   };
 
@@ -175,13 +198,27 @@ function renderAdmin() {
       createdBy: currentUser.id
     });
     saveState();
-    flash("Ujian ditambahkan");
+    flash("Ujian berhasil ditambahkan");
     render();
   };
 
   el.querySelectorAll("[data-expcsv]").forEach((btn) => {
     btn.onclick = () => exportQuestionsCSV(Number(btn.dataset.expcsv));
   });
+
+  let selectedExamForCsvImport = null;
+  el.querySelectorAll("[data-impcsv]").forEach((btn) => {
+    btn.onclick = () => {
+      selectedExamForCsvImport = Number(btn.dataset.impcsv);
+      document.getElementById("importQuestionCsv").click();
+    };
+  });
+
+  document.getElementById("importQuestionCsv").onchange = (ev) => {
+    if (!selectedExamForCsvImport) return;
+    importQuestionsCSV(ev, selectedExamForCsvImport);
+    selectedExamForCsvImport = null;
+  };
 
   document.getElementById("btnExportAll").onclick = exportAll;
   document.getElementById("btnImport").onclick = () => document.getElementById("importFile").click();
@@ -193,92 +230,129 @@ function renderTeacher() {
   el.classList.remove("d-none");
 
   el.innerHTML = `
+    <div class="card mb-3"><div class="card-body">
+      <h6 class="mb-2">Panel Guru (Clean)</h6>
+      <p class="text-muted small mb-0">Guru hanya mengelola persiapan ujian: token, waktu ujian, upload/download soal CSV.</p>
+    </div></div>
+
     <div class="row g-3">
       <div class="col-lg-6">
         <div class="card"><div class="card-body">
-          <h6>Tambah Soal</h6>
-          <form id="formAddQuestion" class="vstack gap-2">
-            <select class="form-select" name="examId" required>
-              <option value="">Pilih Ujian</option>
-              ${state.exams.map((e) => `<option value="${e.id}">${e.title}</option>`).join("")}
-            </select>
-            <textarea class="form-control" name="question" placeholder="Pertanyaan" required></textarea>
-            <input class="form-control" name="a" placeholder="Pilihan A" required />
-            <input class="form-control" name="b" placeholder="Pilihan B" required />
-            <input class="form-control" name="c" placeholder="Pilihan C" required />
-            <input class="form-control" name="d" placeholder="Pilihan D" required />
-            <select class="form-select" name="correct"><option>A</option><option>B</option><option>C</option><option>D</option></select>
-            <button class="btn btn-primary">Tambah Soal</button>
+          <h6 class="mb-3">Persiapan Ujian</h6>
+          <form id="formTeacherExam" class="vstack gap-2">
+            <input class="form-control" name="title" placeholder="Judul ujian" required />
+            <div class="row g-2">
+              <div class="col-md-6"><input class="form-control" type="number" min="1" name="duration" value="60" required /></div>
+              <div class="col-md-6"><input class="form-control" name="token" placeholder="Token (opsional)" /></div>
+            </div>
+            <textarea class="form-control" name="description" placeholder="Deskripsi ujian"></textarea>
+            <input class="form-control" name="targetClass" placeholder="Kelas target (mis. XII-A)" required />
+            <label class="small text-muted">Waktu Mulai</label>
+            <input class="form-control" type="datetime-local" name="startTime" required />
+            <label class="small text-muted">Waktu Selesai</label>
+            <input class="form-control" type="datetime-local" name="endTime" required />
+            <button class="btn btn-success">Simpan Persiapan Ujian</button>
           </form>
         </div></div>
       </div>
 
       <div class="col-lg-6">
         <div class="card"><div class="card-body">
-          <h6>Atur Jadwal Ujian</h6>
-          <form id="formSchedule" class="vstack gap-2">
+          <h6 class="mb-3">Bank Soal Ujian</h6>
+          <form id="formTeacherCsv" class="vstack gap-2">
             <select class="form-select" name="examId" required>
               <option value="">Pilih Ujian</option>
-              ${state.exams.map((e) => `<option value="${e.id}">${e.title}</option>`).join("")}
+              ${state.exams.map((e) => `<option value="${e.id}">${e.title} (${e.token})</option>`).join("")}
             </select>
-            <input class="form-control" name="targetClass" placeholder="Target kelas (mis. XII-A)" required />
-            <input class="form-control" type="datetime-local" name="startTime" required />
-            <input class="form-control" type="datetime-local" name="endTime" required />
-            <button class="btn btn-success">Simpan Jadwal</button>
+            <div class="d-grid gap-2">
+              <button type="button" class="btn btn-outline-primary" id="btnTeacherUploadCsv">Upload Soal CSV</button>
+              <button type="button" class="btn btn-outline-secondary" id="btnTeacherExportCsv">Download Soal CSV</button>
+              <button type="button" class="btn btn-outline-dark" id="btnTeacherGenToken">Generate Token Baru</button>
+            </div>
+            <small class="text-muted">Format CSV: question, option_a, option_b, option_c, option_d, correct</small>
           </form>
+          <input id="teacherCsvFile" type="file" accept=".csv,text/csv" class="d-none" />
         </div></div>
       </div>
     </div>
 
     <div class="card mt-3"><div class="card-body table-responsive">
-      <h6>Daftar Ujian & Soal</h6>
+      <h6>Daftar Ujian Guru</h6>
       <table class="table table-sm">
-        <thead><tr><th>Ujian</th><th>Token</th><th>Durasi</th><th>Jumlah Soal</th></tr></thead>
+        <thead><tr><th>Ujian</th><th>Token</th><th>Durasi</th><th>Kelas</th><th>Waktu</th><th>Soal</th></tr></thead>
         <tbody>
-          ${state.exams.map((e) => `<tr><td>${e.title}</td><td><code>${e.token}</code></td><td>${e.duration} menit</td><td>${state.questions.filter((q) => q.examId === e.id).length}</td></tr>`).join("") || `<tr><td colspan="4" class="text-center">Belum ada ujian</td></tr>`}
-        </tbody>
-      </table>
-    </div></div>
-
-    <div class="card mt-3"><div class="card-body table-responsive">
-      <h6>Jadwal</h6>
-      <table class="table table-sm">
-        <thead><tr><th>Ujian</th><th>Kelas</th><th>Mulai</th><th>Selesai</th></tr></thead>
-        <tbody>
-          ${state.schedules.map((s) => `<tr><td>${(state.exams.find((e) => e.id === s.examId) || {}).title || "-"}</td><td>${s.targetClass}</td><td>${fmt(s.startTime)}</td><td>${fmt(s.endTime)}</td></tr>`).join("") || `<tr><td colspan="4" class="text-center">Belum ada jadwal</td></tr>`}
+          ${state.exams.map((e) => {
+            const sched = state.schedules.find((s) => s.examId === e.id);
+            const qCount = state.questions.filter((q) => q.examId === e.id).length;
+            return `<tr>
+              <td>${e.title}</td>
+              <td><code>${e.token}</code></td>
+              <td>${e.duration} menit</td>
+              <td>${sched?.targetClass || "-"}</td>
+              <td>${sched ? `${fmt(sched.startTime)} - ${fmt(sched.endTime)}` : "-"}</td>
+              <td>${qCount}</td>
+            </tr>`;
+          }).join("") || `<tr><td colspan="6" class="text-center">Belum ada ujian</td></tr>`}
         </tbody>
       </table>
     </div></div>
   `;
 
-  document.getElementById("formAddQuestion").onsubmit = (ev) => {
+  document.getElementById("formTeacherExam").onsubmit = (ev) => {
     ev.preventDefault();
     const fd = new FormData(ev.target);
-    state.questions.push({
-      id: uid(state.questions),
-      examId: Number(fd.get("examId")),
-      question: fd.get("question"),
-      options: { A: fd.get("a"), B: fd.get("b"), C: fd.get("c"), D: fd.get("d") },
-      correct: fd.get("correct")
-    });
-    saveState();
-    flash("Soal ditambahkan");
-    render();
-  };
+    const token = (fd.get("token") || randomToken()).toString().toUpperCase();
+    if (state.exams.some((e) => e.token.toUpperCase() === token)) return flash("Token sudah digunakan", "danger");
 
-  document.getElementById("formSchedule").onsubmit = (ev) => {
-    ev.preventDefault();
-    const fd = new FormData(ev.target);
+    const examId = uid(state.exams);
+    state.exams.push({
+      id: examId,
+      title: fd.get("title"),
+      description: fd.get("description") || "",
+      duration: Number(fd.get("duration")),
+      token,
+      createdBy: currentUser.id
+    });
     state.schedules.push({
       id: uid(state.schedules),
-      examId: Number(fd.get("examId")),
+      examId,
       targetClass: fd.get("targetClass"),
       startTime: fd.get("startTime"),
       endTime: fd.get("endTime")
     });
+
     saveState();
-    flash("Jadwal ditambahkan");
+    flash("Ujian & jadwal berhasil dipersiapkan");
     render();
+  };
+
+  const getSelectedExamId = () => {
+    const v = new FormData(document.getElementById("formTeacherCsv")).get("examId");
+    return Number(v);
+  };
+
+  document.getElementById("btnTeacherUploadCsv").onclick = () => {
+    const examId = getSelectedExamId();
+    if (!examId) return flash("Pilih ujian terlebih dahulu", "danger");
+    document.getElementById("teacherCsvFile").click();
+  };
+
+  document.getElementById("teacherCsvFile").onchange = (ev) => {
+    const examId = getSelectedExamId();
+    if (!examId) return flash("Pilih ujian terlebih dahulu", "danger");
+    importQuestionsCSV(ev, examId);
+  };
+
+  document.getElementById("btnTeacherExportCsv").onclick = () => {
+    const examId = getSelectedExamId();
+    if (!examId) return flash("Pilih ujian terlebih dahulu", "danger");
+    exportQuestionsCSV(examId);
+  };
+
+  document.getElementById("btnTeacherGenToken").onclick = () => {
+    const examId = getSelectedExamId();
+    if (!examId) return flash("Pilih ujian terlebih dahulu", "danger");
+    regenerateExamToken(examId);
   };
 }
 
@@ -408,7 +482,7 @@ function importAll(ev) {
       if (!required.every((k) => Array.isArray(data[k]))) throw new Error("Format tidak valid");
       state = data;
       saveState();
-      flash("Import berhasil");
+      flash("Import data JSON berhasil");
       render();
     } catch (_e) {
       flash("Gagal import file JSON", "danger");
@@ -426,6 +500,121 @@ function exportQuestionsCSV(examId) {
     .join("\n");
   const blob = new Blob([csv], { type: "text/csv" });
   downloadBlob(blob, `soal_${(exam?.title || "ujian").replace(/\s+/g, "_")}.csv`);
+}
+
+function importQuestionsCSV(ev, examId) {
+  const file = ev.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const text = String(reader.result || "").trim();
+      if (!text) throw new Error("File kosong");
+
+      const parsed = parseCsv(text);
+      if (parsed.length < 2) throw new Error("CSV tidak berisi data");
+
+      const header = parsed[0].map((h) => String(h || "").trim().toLowerCase());
+      const required = ["question", "option_a", "option_b", "option_c", "option_d", "correct"];
+      for (const key of required) {
+        if (!header.includes(key)) throw new Error("Header CSV tidak sesuai");
+      }
+
+      const idx = Object.fromEntries(required.map((k) => [k, header.indexOf(k)]));
+      const importedRows = [];
+      for (let i = 1; i < parsed.length; i += 1) {
+        const row = parsed[i];
+        if (!row || row.every((c) => String(c || "").trim() === "")) continue;
+
+        const question = String(row[idx.question] || "").trim();
+        const a = String(row[idx.option_a] || "").trim();
+        const b = String(row[idx.option_b] || "").trim();
+        const c = String(row[idx.option_c] || "").trim();
+        const d = String(row[idx.option_d] || "").trim();
+        const correct = String(row[idx.correct] || "").trim().toUpperCase();
+
+        if (!question || !a || !b || !c || !d || !["A", "B", "C", "D"].includes(correct)) {
+          continue;
+        }
+
+        importedRows.push({
+          id: uid(state.questions.concat(importedRows)),
+          examId,
+          question,
+          options: { A: a, B: b, C: c, D: d },
+          correct
+        });
+      }
+
+      state.questions = state.questions.filter((q) => q.examId !== examId);
+      state.questions.push(...importedRows);
+      saveState();
+      flash(`Import CSV selesai: ${importedRows.length} soal`);
+      render();
+    } catch (_e) {
+      flash("Gagal import CSV soal", "danger");
+    }
+  };
+  reader.readAsText(file);
+  ev.target.value = "";
+}
+
+function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+
+    if (ch === '"') {
+      if (inQuotes && text[i + 1] === '"') {
+        cell += '"';
+        i += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (ch === "," && !inQuotes) {
+      row.push(cell);
+      cell = "";
+      continue;
+    }
+
+    if ((ch === "\n" || ch === "\r") && !inQuotes) {
+      if (ch === "\r" && text[i + 1] === "\n") i += 1;
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = "";
+      continue;
+    }
+
+    cell += ch;
+  }
+
+  row.push(cell);
+  rows.push(row);
+  return rows;
+}
+
+function regenerateExamToken(examId) {
+  const exam = state.exams.find((e) => e.id === examId);
+  if (!exam) return;
+
+  let token = randomToken();
+  while (state.exams.some((e) => e.id !== examId && e.token.toUpperCase() === token.toUpperCase())) {
+    token = randomToken();
+  }
+
+  exam.token = token;
+  saveState();
+  flash(`Token baru: ${token}`);
+  render();
 }
 
 function csvCell(x) {
